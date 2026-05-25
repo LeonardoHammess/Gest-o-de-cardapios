@@ -1,0 +1,244 @@
+@page "/cardapios"
+@using PROJETO.MEU.Models
+@using PROJETO.MEU.Services
+@inject ICardapioService CardapioService
+@inject IRefeicaoService RefeicaoService
+@rendermode InteractiveServer
+
+<div class="container mt-5">
+    <h1>Gerenciar Cardápios</h1>
+
+    @if (!string.IsNullOrEmpty(mensagem))
+    {
+        <div class="alert alert-info">@mensagem</div>
+    }
+
+    @if (!string.IsNullOrEmpty(erro))
+    {
+        <div class="alert alert-danger">@erro</div>
+    }
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Novo Cardápio</h5>
+        </div>
+        <div class="card-body">
+            <form @onsubmit="CriarCardapio">
+                <div class="mb-3">
+                    <label for="semana" class="form-label">Semana</label>
+                    <input type="text" class="form-control" id="semana" @bind="novoCardapio.Semana" 
+                        placeholder="Ex: 2026-05-25 a 2026-05-31" required />
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="dataInicio" class="form-label">Data Início</label>
+                        <input type="date" class="form-control" id="dataInicio" @bind="novoCardapio.DataInicio" required />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="dataFim" class="form-label">Data Fim</label>
+                        <input type="date" class="form-control" id="dataFim" @bind="novoCardapio.DataFim" required />
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Criar Cardápio</button>
+            </form>
+        </div>
+    </div>
+
+    <h3>Cardápios Cadastrados</h3>
+    @if (cardapios.Count == 0)
+    {
+        <p>Nenhum cardápio cadastrado.</p>
+    }
+    else
+    {
+        @foreach (var cardapio in cardapios)
+        {
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5>@cardapio.Semana</h5>
+                    <small class="text-muted">@cardapio.DataInicio.Date.ToString("dd/MM/yyyy") a @cardapio.DataFim.Date.ToString("dd/MM/yyyy")</small>
+                </div>
+                <div class="card-body">
+                    <button class="btn btn-sm btn-success" @onclick="() => MostrarFormularioItem(cardapio.Id)">+ Adicionar Refeição</button>
+                    
+                    @if (cardapioAberto == cardapio.Id)
+                    {
+                        <div class="mt-3 border-top pt-3">
+                            <h6>Adicionar Refeição ao Cardápio</h6>
+                            <form @onsubmit="() => AdicionarItemCardapio(cardapio.Id)">
+                                <div class="row">
+                                    <div class="col-md-4 mb-2">
+                                        <select class="form-control" @bind="novoItem.RefeicaoId" required>
+                                            <option value="0">-- Selecione Refeição --</option>
+                                            @foreach (var refeicao in refeicoes)
+                                            {
+                                                <option value="@refeicao.Id">@refeicao.Nome (@refeicao.Tipo)</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 mb-2">
+                                        <select class="form-control" @bind="novoItem.DiaSemana" required>
+                                            <option value="">-- Dia --</option>
+                                            <option value="Segunda">Segunda</option>
+                                            <option value="Terça">Terça</option>
+                                            <option value="Quarta">Quarta</option>
+                                            <option value="Quinta">Quinta</option>
+                                            <option value="Sexta">Sexta</option>
+                                            <option value="Sábado">Sábado</option>
+                                            <option value="Domingo">Domingo</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 mb-2">
+                                        <select class="form-control" @bind="novoItem.Turno" required>
+                                            <option value="">-- Turno --</option>
+                                            <option value="Café da manhã">Café da manhã</option>
+                                            <option value="Almoço">Almoço</option>
+                                            <option value="Café da tarde">Café da tarde</option>
+                                            <option value="Janta">Janta</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2 mb-2">
+                                        <button type="submit" class="btn btn-primary btn-block w-100">Adicionar</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    }
+
+                    <h6 class="mt-4">Refeições do Cardápio</h6>
+                    @if (itensCardapio.ContainsKey(cardapio.Id) && itensCardapio[cardapio.Id].Count > 0)
+                    {
+                        <table class="table table-sm table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Refeição</th>
+                                    <th>Dia</th>
+                                    <th>Turno</th>
+                                    <th>Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in itensCardapio[cardapio.Id])
+                                {
+                                    <tr>
+                                        <td>@item.Refeicao?.Nome</td>
+                                        <td>@item.DiaSemana</td>
+                                        <td>@item.Turno</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-danger" @onclick="() => RemoverItem(item.Id)">Remover</button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <p class="text-muted">Nenhuma refeição cadastrada neste cardápio.</p>
+                    }
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    private List<Cardapio> cardapios = new();
+    private List<Refeicao> refeicoes = new();
+    private Cardapio novoCardapio = new();
+    private ItemCardapio novoItem = new();
+    private Dictionary<int, List<ItemCardapio>> itensCardapio = new();
+    private int? cardapioAberto = null;
+    private string mensagem = "";
+    private string erro = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarCardapios();
+        await CarregarRefeicoes();
+    }
+
+    private async Task CarregarCardapios()
+    {
+        try
+        {
+            cardapios = (await CardapioService.GetAllAsync()).ToList();
+            foreach (var cardapio in cardapios)
+            {
+                var itens = await CardapioService.GetItemsByCardapioIdAsync(cardapio.Id);
+                itensCardapio[cardapio.Id] = itens.ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            erro = $"Erro ao carregar cardápios: {ex.Message}";
+        }
+    }
+
+    private async Task CarregarRefeicoes()
+    {
+        try
+        {
+            refeicoes = (await RefeicaoService.GetAllAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            erro = $"Erro ao carregar refeições: {ex.Message}";
+        }
+    }
+
+    private async Task CriarCardapio()
+    {
+        try
+        {
+            await CardapioService.CreateAsync(novoCardapio.Semana, novoCardapio.DataInicio, novoCardapio.DataFim);
+            mensagem = "Cardápio criado com sucesso!";
+            novoCardapio = new();
+            await CarregarCardapios();
+            erro = "";
+        }
+        catch (Exception ex)
+        {
+            erro = $"Erro ao criar cardápio: {ex.Message}";
+        }
+    }
+
+    private async Task AdicionarItemCardapio(int cardapioId)
+    {
+        try
+        {
+            await CardapioService.AddItemAsync(cardapioId, novoItem.RefeicaoId, novoItem.DiaSemana, novoItem.Turno);
+            mensagem = "Refeição adicionada ao cardápio!";
+            novoItem = new();
+            cardapioAberto = null;
+            await CarregarCardapios();
+            erro = "";
+        }
+        catch (Exception ex)
+        {
+            erro = $"Erro: {ex.Message}";
+        }
+    }
+
+    private async Task RemoverItem(int itemId)
+    {
+        try
+        {
+            await CardapioService.RemoveItemAsync(itemId);
+            mensagem = "Refeição removida do cardápio!";
+            await CarregarCardapios();
+            erro = "";
+        }
+        catch (Exception ex)
+        {
+            erro = $"Erro ao remover: {ex.Message}";
+        }
+    }
+
+    private void MostrarFormularioItem(int cardapioId)
+    {
+        cardapioAberto = cardapioAberto == cardapioId ? null : cardapioId;
+    }
+}

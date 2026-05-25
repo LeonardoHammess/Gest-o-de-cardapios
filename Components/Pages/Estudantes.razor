@@ -1,0 +1,166 @@
+@page "/estudantes"
+@using PROJETO.MEU.Models
+@using PROJETO.MEU.Services
+@inject IEstudanteService EstudanteService
+@rendermode InteractiveServer
+
+<div class="container mt-5">
+    <h1>Gerenciar Estudantes</h1>
+
+    @if (!string.IsNullOrEmpty(mensagem))
+    {
+        <div class="alert alert-info">@mensagem</div>
+    }
+
+    @if (!string.IsNullOrEmpty(erro))
+    {
+        <div class="alert alert-danger">@erro</div>
+    }
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>@(editandoId == null ? "Novo Estudante" : "Editar Estudante")</h5>
+        </div>
+        <div class="card-body">
+            <form @onsubmit="SalvarEstudante">
+                <div class="mb-3">
+                    <label for="nome" class="form-label">Nome</label>
+                    <input type="text" class="form-control" id="nome" @bind="novoEstudante.Nome" required />
+                </div>
+
+                <div class="mb-3">
+                    <label for="matricula" class="form-label">Matrícula</label>
+                    <input type="text" class="form-control" id="matricula" @bind="novoEstudante.Matricula" 
+                        required disabled="@(editandoId != null)" />
+                </div>
+
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="email" @bind="novoEstudante.Email" required />
+                </div>
+
+                <button type="submit" class="btn btn-primary">Salvar</button>
+                @if (editandoId != null)
+                {
+                    <button type="button" class="btn btn-secondary" @onclick="Cancelar">Cancelar</button>
+                }
+            </form>
+        </div>
+    </div>
+
+    <h3>Estudantes Cadastrados</h3>
+    @if (estudantes.Count == 0)
+    {
+        <p>Nenhum estudante cadastrado.</p>
+    }
+    else
+    {
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Matrícula</th>
+                    <th>Email</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var estudante in estudantes)
+                {
+                    <tr>
+                        <td>@estudante.Nome</td>
+                        <td>@estudante.Matricula</td>
+                        <td>@estudante.Email</td>
+                        <td>
+                            <button class="btn btn-sm btn-warning" @onclick="() => Editar(estudante)">Editar</button>
+                            <button class="btn btn-sm btn-danger" @onclick="() => Deletar(estudante.Id)">Deletar</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    private List<Estudante> estudantes = new();
+    private Estudante novoEstudante = new();
+    private int? editandoId = null;
+    private string mensagem = "";
+    private string erro = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarEstudantes();
+    }
+
+    private async Task CarregarEstudantes()
+    {
+        try
+        {
+            estudantes = (await EstudanteService.GetAllAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            erro = $"Erro ao carregar estudantes: {ex.Message}";
+        }
+    }
+
+    private async Task SalvarEstudante()
+    {
+        try
+        {
+            if (editandoId == null)
+            {
+                await EstudanteService.CreateAsync(novoEstudante.Nome, novoEstudante.Matricula, novoEstudante.Email);
+                mensagem = "Estudante criado com sucesso!";
+            }
+            else
+            {
+                await EstudanteService.UpdateAsync(editandoId.Value, novoEstudante.Nome, novoEstudante.Email);
+                mensagem = "Estudante atualizado com sucesso!";
+                editandoId = null;
+            }
+
+            novoEstudante = new();
+            await CarregarEstudantes();
+            erro = "";
+        }
+        catch (Exception ex)
+        {
+            erro = $"Erro ao salvar estudante: {ex.Message}";
+        }
+    }
+
+    private void Editar(Estudante estudante)
+    {
+        novoEstudante = new Estudante
+        {
+            Nome = estudante.Nome,
+            Matricula = estudante.Matricula,
+            Email = estudante.Email
+        };
+        editandoId = estudante.Id;
+    }
+
+    private void Cancelar()
+    {
+        novoEstudante = new();
+        editandoId = null;
+    }
+
+    private async Task Deletar(int id)
+    {
+        try
+        {
+            await EstudanteService.DeleteAsync(id);
+            mensagem = "Estudante deletado com sucesso!";
+            await CarregarEstudantes();
+            erro = "";
+        }
+        catch (Exception ex)
+        {
+            erro = $"Erro ao deletar estudante: {ex.Message}";
+        }
+    }
+}

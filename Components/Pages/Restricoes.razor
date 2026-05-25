@@ -1,0 +1,157 @@
+@page "/restricoes"
+@using PROJETO.MEU.Models
+@using PROJETO.MEU.Services
+@inject IRestricaoAlimentarService RestricaoService
+@rendermode InteractiveServer
+
+<div class="container mt-5">
+    <h1>Gerenciar Restrições Alimentares</h1>
+
+    @if (!string.IsNullOrEmpty(mensagem))
+    {
+        <div class="alert alert-info">@mensagem</div>
+    }
+
+    @if (!string.IsNullOrEmpty(erro))
+    {
+        <div class="alert alert-danger">@erro</div>
+    }
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>@(editandoId == null ? "Nova Restrição" : "Editar Restrição")</h5>
+        </div>
+        <div class="card-body">
+            <form @onsubmit="SalvarRestricao">
+                <div class="mb-3">
+                    <label for="nome" class="form-label">Nome</label>
+                    <input type="text" class="form-control" id="nome" @bind="novaRestricao.Nome" required />
+                </div>
+
+                <div class="mb-3">
+                    <label for="descricao" class="form-label">Descrição</label>
+                    <textarea class="form-control" id="descricao" @bind="novaRestricao.Descricao" rows="3"></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Salvar</button>
+                @if (editandoId != null)
+                {
+                    <button type="button" class="btn btn-secondary" @onclick="Cancelar">Cancelar</button>
+                }
+            </form>
+        </div>
+    </div>
+
+    <h3>Restrições Cadastradas</h3>
+    @if (restricoes.Count == 0)
+    {
+        <p>Nenhuma restrição cadastrada.</p>
+    }
+    else
+    {
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Descrição</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var restricao in restricoes)
+                {
+                    <tr>
+                        <td>@restricao.Nome</td>
+                        <td>@restricao.Descricao</td>
+                        <td>
+                            <button class="btn btn-sm btn-warning" @onclick="() => Editar(restricao)">Editar</button>
+                            <button class="btn btn-sm btn-danger" @onclick="() => Deletar(restricao.Id)">Deletar</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    private List<RestricaoAlimentar> restricoes = new();
+    private RestricaoAlimentar novaRestricao = new();
+    private int? editandoId = null;
+    private string mensagem = "";
+    private string erro = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarRestricoes();
+    }
+
+    private async Task CarregarRestricoes()
+    {
+        try
+        {
+            restricoes = (await RestricaoService.GetAllAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            erro = $"Erro ao carregar restrições: {ex.Message}";
+        }
+    }
+
+    private async Task SalvarRestricao()
+    {
+        try
+        {
+            if (editandoId == null)
+            {
+                await RestricaoService.CreateAsync(novaRestricao.Nome, novaRestricao.Descricao);
+                mensagem = "Restrição criada com sucesso!";
+            }
+            else
+            {
+                await RestricaoService.UpdateAsync(editandoId.Value, novaRestricao.Nome, novaRestricao.Descricao);
+                mensagem = "Restrição atualizada com sucesso!";
+                editandoId = null;
+            }
+
+            novaRestricao = new();
+            await CarregarRestricoes();
+            erro = "";
+        }
+        catch (Exception ex)
+        {
+            erro = $"Erro ao salvar restrição: {ex.Message}";
+        }
+    }
+
+    private void Editar(RestricaoAlimentar restricao)
+    {
+        novaRestricao = new RestricaoAlimentar
+        {
+            Nome = restricao.Nome,
+            Descricao = restricao.Descricao
+        };
+        editandoId = restricao.Id;
+    }
+
+    private void Cancelar()
+    {
+        novaRestricao = new();
+        editandoId = null;
+    }
+
+    private async Task Deletar(int id)
+    {
+        try
+        {
+            await RestricaoService.DeleteAsync(id);
+            mensagem = "Restrição deletada com sucesso!";
+            await CarregarRestricoes();
+            erro = "";
+        }
+        catch (Exception ex)
+        {
+            erro = $"Erro ao deletar restrição: {ex.Message}";
+        }
+    }
+}

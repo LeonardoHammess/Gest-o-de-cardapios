@@ -1,0 +1,71 @@
+﻿<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">Restaurante Universitário</a>
+    </div>
+</div>
+
+<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+
+<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+    <nav class="nav flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <div class="nav-link" @onclick="ToggleMenu" role="button">
+                <span class="bi bi-ui-checks-grid" aria-hidden="true"></span> Gerenciamento
+            </div>
+            @if (menuAberto)
+            {
+                <nav class="nav flex-column ms-3">
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="refeicoes">Refeições</NavLink>
+                    </div>
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="ingredientes">Ingredientes</NavLink>
+                    </div>
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="restricoes">Restrições</NavLink>
+                    </div>
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="estudantes">Estudantes</NavLink>
+                    </div>
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="cardapios">Cardápios</NavLink>
+                    </div>
+                </nav>
+            }
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="consumo">
+                <span class="bi bi-file-earmark-medical-nav-menu" aria-hidden="true"></span> Registrar Consumo
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="consultar-cardapio">
+                <span class="bi bi-book-nav-menu" aria-hidden="true"></span> Consultar Cardápio
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="filtrar-refeicoes">
+                <span class="bi bi-funnel-nav-menu" aria-hidden="true"></span> Filtrar Refeições
+            </NavLink>
+        </div>
+    </nav>
+</div>
+
+@code {
+    private bool menuAberto = false;
+
+    private void ToggleMenu()
+    {
+        menuAberto = !menuAberto;
+    }
+}
+

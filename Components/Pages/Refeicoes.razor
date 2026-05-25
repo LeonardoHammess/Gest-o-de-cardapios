@@ -1,0 +1,179 @@
+@page "/refeicoes"
+@using PROJETO.MEU.Models
+@using PROJETO.MEU.Services
+@inject IRefeicaoService RefeicaoService
+@inject IIngredienteService IngredienteService
+@inject IRestricaoAlimentarService RestricaoService
+@rendermode InteractiveServer
+
+<div class="container mt-5">
+    <h1>Gerenciar Refeições</h1>
+
+    @if (!string.IsNullOrEmpty(mensagem))
+    {
+        <div class="alert alert-info">@mensagem</div>
+    }
+
+    @if (!string.IsNullOrEmpty(erro))
+    {
+        <div class="alert alert-danger">@erro</div>
+    }
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>@(editandoId == null ? "Nova Refeição" : "Editar Refeição")</h5>
+        </div>
+        <div class="card-body">
+            <form @onsubmit="SalvarRefeicao">
+                <div class="mb-3">
+                    <label for="nome" class="form-label">Nome</label>
+                    <input type="text" class="form-control" id="nome" @bind="novaRefeicao.Nome" required />
+                </div>
+
+                <div class="mb-3">
+                    <label for="tipo" class="form-label">Tipo</label>
+                    <select class="form-control" id="tipo" @bind="novaRefeicao.Tipo" required>
+                        <option value="">-- Selecione --</option>
+                        <option value="Café da manhã">Café da manhã</option>
+                        <option value="Almoço">Almoço</option>
+                        <option value="Café da tarde">Café da tarde</option>
+                        <option value="Janta">Janta</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="descricao" class="form-label">Descrição</label>
+                    <textarea class="form-control" id="descricao" @bind="novaRefeicao.Descricao" rows="3"></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Salvar</button>
+                @if (editandoId != null)
+                {
+                    <button type="button" class="btn btn-secondary" @onclick="Cancelar">Cancelar</button>
+                }
+            </form>
+        </div>
+    </div>
+
+    <h3>Refeições Cadastradas</h3>
+    @if (refeicoes.Count == 0)
+    {
+        <p>Nenhuma refeição cadastrada.</p>
+    }
+    else
+    {
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Tipo</th>
+                    <th>Descrição</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var refeicao in refeicoes)
+                {
+                    <tr>
+                        <td>@refeicao.Nome</td>
+                        <td>@refeicao.Tipo</td>
+                        <td>@refeicao.Descricao</td>
+                        <td>
+                            <button class="btn btn-sm btn-warning" @onclick="() => Editar(refeicao)">Editar</button>
+                            <button class="btn btn-sm btn-danger" @onclick="() => Deletar(refeicao.Id)">Deletar</button>
+                            <button class="btn btn-sm btn-info" @onclick="() => AbrirRestricoes(refeicao.Id)">Restrições</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    private List<Refeicao> refeicoes = new();
+    private Refeicao novaRefeicao = new();
+    private int? editandoId = null;
+    private string mensagem = "";
+    private string erro = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarRefeicoes();
+    }
+
+    private async Task CarregarRefeicoes()
+    {
+        try
+        {
+            refeicoes = (await RefeicaoService.GetAllAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            erro = $"Erro ao carregar refeições: {ex.Message}";
+        }
+    }
+
+    private async Task SalvarRefeicao()
+    {
+        try
+        {
+            if (editandoId == null)
+            {
+                await RefeicaoService.CreateAsync(novaRefeicao.Nome, novaRefeicao.Tipo, novaRefeicao.Descricao);
+                mensagem = "Refeição criada com sucesso!";
+            }
+            else
+            {
+                await RefeicaoService.UpdateAsync(editandoId.Value, novaRefeicao.Nome, novaRefeicao.Tipo, novaRefeicao.Descricao);
+                mensagem = "Refeição atualizada com sucesso!";
+                editandoId = null;
+            }
+
+            novaRefeicao = new();
+            await CarregarRefeicoes();
+            erro = "";
+        }
+        catch (Exception ex)
+        {
+            erro = $"Erro ao salvar refeição: {ex.Message}";
+        }
+    }
+
+    private void Editar(Refeicao refeicao)
+    {
+        novaRefeicao = new Refeicao
+        {
+            Nome = refeicao.Nome,
+            Tipo = refeicao.Tipo,
+            Descricao = refeicao.Descricao
+        };
+        editandoId = refeicao.Id;
+    }
+
+    private void Cancelar()
+    {
+        novaRefeicao = new();
+        editandoId = null;
+    }
+
+    private async Task Deletar(int id)
+    {
+        try
+        {
+            await RefeicaoService.DeleteAsync(id);
+            mensagem = "Refeição deletada com sucesso!";
+            await CarregarRefeicoes();
+            erro = "";
+        }
+        catch (Exception ex)
+        {
+            erro = $"Erro ao deletar refeição: {ex.Message}";
+        }
+    }
+
+    private void AbrirRestricoes(int refeicaoId)
+    {
+        // Será implementado em um modal
+    }
+}

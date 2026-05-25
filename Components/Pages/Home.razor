@@ -1,0 +1,78 @@
+﻿@page "/"
+
+<PageTitle>Home - Sistema de Gestão de Cardápios</PageTitle>
+
+<div class="container mt-5">
+    <div class="jumbotron">
+        <h1 class="display-4">Sistema de Gestão de Cardápios</h1>
+        <p class="lead">Restaurante Universitário</p>
+        <hr class="my-4" />
+        <p>Bem-vindo ao sistema de gestão de cardápios e refeições do restaurante universitário. Este sistema permite gerenciar refeições, cardápios semanais, estudantes e registrar o consumo de refeições.</p>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">📋 Gerenciar</h5>
+                    <p class="card-text">Acesse o menu de gerenciamento para criar e editar:</p>
+                    <ul>
+                        <li>Refeições</li>
+                        <li>Ingredientes</li>
+                        <li>Restrições Alimentares</li>
+                        <li>Estudantes</li>
+                        <li>Cardápios Semanais</li>
+                    </ul>
+                    <a href="refeicoes" class="btn btn-primary">Ir para Gerenciamento</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">🍽️ Registrar Consumo</h5>
+                    <p class="card-text">Registre quando um estudante consome uma refeição no restaurante.</p>
+                    <a href="consumo" class="btn btn-success">Registrar Consumo</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">📅 Consultar Cardápio</h5>
+                    <p class="card-text">Visualize o cardápio da semana com todas as refeições disponíveis.</p>
+                    <a href="consultar-cardapio" class="btn btn-info">Consultar Cardápio</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">🔍 Filtrar Refeições</h5>
+                    <p class="card-text">Encontre refeições seguras para estudantes com restrições alimentares específicas.</p>
+                    <a href="filtrar-refeicoes" class="btn btn-warning">Filtrar Refeições</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-5 p-3 bg-light rounded">
+        <h5>Funcionalidades Principais</h5>
+        <ul>
+            <li>✓ Cadastro e gerenciamento de refeições com ingredientes</li>
+            <li>✓ Definição de restrições alimentares (alergias, dietas, etc.)</li>
+            <li>✓ Criação de cardápios semanais organizados por dia e turno</li>
+            <li>✓ Prevenção de cadastro duplicado de refeição no mesmo dia e turno</li>
+            <li>✓ Gerenciamento de estudantes com suas restrições</li>
+            <li>✓ Registro de consumo de refeições</li>
+            <li>✓ Filtro de refeições por restrição alimentar</li>
+            <li>✓ Consulta de cardápios por semana</li>
+        </ul>
+    </div>
+</div>
+

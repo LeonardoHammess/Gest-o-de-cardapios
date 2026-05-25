@@ -1,0 +1,97 @@
+@page "/consultar-cardapio"
+@using PROJETO.MEU.Models
+@using PROJETO.MEU.Services
+@inject ICardapioService CardapioService
+@rendermode InteractiveServer
+
+<div class="container mt-5">
+    <h1>Consultar Cardápio</h1>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Selecione uma Semana</h5>
+        </div>
+        <div class="card-body">
+            <form @onsubmit="BuscaCardapio">
+                <div class="mb-3">
+                    <label for="data" class="form-label">Data (será usado o cardápio da semana contendo esta data)</label>
+                    <input type="date" class="form-control" id="data" @bind="dataSelecionada" required />
+                </div>
+
+                <button type="submit" class="btn btn-primary">Consultar Cardápio</button>
+            </form>
+        </div>
+    </div>
+
+    @if (cardapioSelecionado != null)
+    {
+        <div class="card">
+            <div class="card-header">
+                <h4>@cardapioSelecionado.Semana</h4>
+                <small class="text-muted">@cardapioSelecionado.DataInicio.Date.ToString("dd/MM/yyyy") a @cardapioSelecionado.DataFim.Date.ToString("dd/MM/yyyy")</small>
+            </div>
+            <div class="card-body">
+                @if (itensCardapio.Count == 0)
+                {
+                    <p>Nenhuma refeição cadastrada para este cardápio.</p>
+                }
+                else
+                {
+                    @foreach (var grupo in itensCardapio.GroupBy(i => i.DiaSemana))
+                    {
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2">@grupo.Key</h5>
+                            
+                            @foreach (var turnoGrupo in grupo.GroupBy(i => i.Turno))
+                            {
+                                <div class="ms-3 mb-3">
+                                    <h6>@turnoGrupo.Key</h6>
+                                    <ul>
+                                        @foreach (var item in turnoGrupo)
+                                        {
+                                            <li>
+                                                <strong>@item.Refeicao?.Nome</strong>
+                                                @if (item.Refeicao?.Restricoes.Count > 0)
+                                                {
+                                                    <div class="small text-muted">
+                                                        Restrições: @string.Join(", ", item.Refeicao.Restricoes.Select(r => r.Nome))
+                                                    </div>
+                                                }
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+                            }
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private Cardapio? cardapioSelecionado;
+    private List<ItemCardapio> itensCardapio = new();
+    private DateTime dataSelecionada = DateTime.Now;
+
+    private async Task BuscaCardapio()
+    {
+        try
+        {
+            // TODO: Implementar a busca do cardápio pela data
+            // Por enquanto, vamos buscar o primeiro cardápio
+            var cardapios = await CardapioService.GetAllAsync();
+            cardapioSelecionado = cardapios.FirstOrDefault();
+
+            if (cardapioSelecionado != null)
+            {
+                itensCardapio = (await CardapioService.GetItemsByCardapioIdAsync(cardapioSelecionado.Id)).ToList();
+            }
+        }
+        catch
+        {
+            // Tratar erro
+        }
+    }
+}

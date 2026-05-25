@@ -1,0 +1,115 @@
+@page "/filtrar-refeicoes"
+@using PROJETO.MEU.Models
+@using PROJETO.MEU.Services
+@inject IRefeicaoService RefeicaoService
+@inject IRestricaoAlimentarService RestricaoService
+@rendermode InteractiveServer
+
+<div class="container mt-5">
+    <h1>Filtrar Refeições por Restrição Alimentar</h1>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Selecione uma Restrição</h5>
+        </div>
+        <div class="card-body">
+            <form @onsubmit="Filtrar">
+                <div class="mb-3">
+                    <label for="restricao" class="form-label">Restrição Alimentar</label>
+                    <select class="form-control" id="restricao" @bind="restricaoId" required>
+                        <option value="">-- Selecione Restrição --</option>
+                        @foreach (var restricao in restricoes)
+                        {
+                            <option value="@restricao.Id">@restricao.Nome</option>
+                        }
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Buscar</button>
+            </form>
+        </div>
+    </div>
+
+    @if (refeicoesEncontradas.Count > 0)
+    {
+        <h3>Refeições sem @restricaoSelecionada?.Nome</h3>
+        <p class="text-muted">Estas refeições são seguras para estudantes com a restrição selecionada:</p>
+
+        <div class="row">
+            @foreach (var refeicao in refeicoesEncontradas)
+            {
+                <div class="col-md-6 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">@refeicao.Nome</h5>
+                            <p class="card-text">
+                                <strong>Tipo:</strong> @refeicao.Tipo<br />
+                                <strong>Descrição:</strong> @refeicao.Descricao
+                            </p>
+                            @if (refeicao.Ingredientes.Count > 0)
+                            {
+                                <p>
+                                    <strong>Ingredientes:</strong><br />
+                                    @string.Join(", ", refeicao.Ingredientes.Select(i => i.Nome))
+                                </p>
+                            }
+                            @if (refeicao.Restricoes.Count > 0)
+                            {
+                                <p>
+                                    <strong>Contém restrições:</strong><br />
+                                    <span class="badge bg-warning">@string.Join(", ", refeicao.Restricoes.Select(r => r.Nome))</span>
+                                </p>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else if (filtroRealizado)
+    {
+        <div class="alert alert-info">Nenhuma refeição encontrada com essa restrição.</div>
+    }
+</div>
+
+@code {
+    private List<RestricaoAlimentar> restricoes = new();
+    private List<Refeicao> refeicoesEncontradas = new();
+    private RestricaoAlimentar? restricaoSelecionada = null;
+    private string restricaoId = "";
+    private bool filtroRealizado = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarRestricoes();
+    }
+
+    private async Task CarregarRestricoes()
+    {
+        try
+        {
+            restricoes = (await RestricaoService.GetAllAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            // Tratamento de erro
+        }
+    }
+
+    private async Task Filtrar()
+    {
+        try
+        {
+            if (!int.TryParse(restricaoId, out var id))
+                return;
+
+            restricaoSelecionada = await RestricaoService.GetByIdAsync(id);
+            refeicoesEncontradas = (await RefeicaoService.GetByRestricaoAsync(id)).ToList();
+            filtroRealizado = true;
+        }
+        catch
+        {
+            // Tratamento de erro
+        }
+    }
+}
